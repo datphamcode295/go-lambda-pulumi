@@ -1,4 +1,4 @@
-module ginLambdaApi1
+module ginLambdaApi2
 
 go 1.21
 

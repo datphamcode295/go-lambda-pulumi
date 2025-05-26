@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -12,58 +12,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var ginLambda *ginadapter.GinLambda
-
-func init() {
-	// stdout and stderr are sent to AWS CloudWatch Logs
-	log.Printf("Gin cold start")
-	r := gin.Default()
-
-	// Define your routes
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
-	r.GET("/hello/:name", func(c *gin.Context) {
-		name := c.Param("name")
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Hello " + name + "!",
-		})
-	})
-
-	// If you need to serve static files or use other Gin features,
-	// configure them here.
-
-	ginLambda = ginadapter.New(r)
-}
-
-// Handler is the Lambda function handler
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	// If no name is provided in the HTTP request, use the AWS_LAMBDA_FUNCTION_NAME environment variable
-	log.Printf("Received rawPath: %s, path: %s", req.RequestContext.Path, req.Path) // Add this
-	return ginLambda.ProxyWithContext(ctx, req)
-}
+var ginLambda *ginadapter.GinLambdaV2
 
 func main() {
-	// Check if running in Lambda environment
-	if _, ok := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME"); ok {
-		// Start Lambda handler
-		lambda.Start(Handler)
-	} else {
-		// Start local Gin server (for local development)
-		log.Println("Starting local Gin server on :8080")
-		localRouter := gin.Default()
-		localRouter.GET("/ping", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "pong (local)"})
-		})
-		localRouter.GET("/hello/:name", func(c *gin.Context) {
-			name := c.Param("name")
-			c.JSON(http.StatusOK, gin.H{"message": "Hello " + name + "! (local)"})
-		})
-		if err := localRouter.Run(":8080"); err != nil {
-			log.Fatalf("Failed to run local server: %v", err)
-		}
+	lambda.Start(Handler)
+}
+
+func GetShortURL(c *gin.Context) {
+	shortcode := c.Param("shortcode")
+	c.JSON(http.StatusOK, gin.H{"shortcode": shortcode})
+}
+
+func init() {
+	r := gin.Default()
+
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
+	})
+
+	// access url
+	r.GET("/app/:shortcode", GetShortURL)
+
+	ginLambda = ginadapter.NewV2(r)
+}
+
+func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	// parse json request
+	reqJson, err := json.Marshal(req)
+	if err != nil {
+		log.Println("Error marshalling request", err)
 	}
+
+	log.Println("Request received", string(reqJson))
+	return ginLambda.ProxyWithContext(ctx, req)
 }

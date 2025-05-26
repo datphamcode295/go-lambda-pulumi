@@ -93,7 +93,7 @@ func main() {
 		// Create a stage and deploy the API.
 		_, err = apigatewayv2.NewStage(ctx, "apiStage", &apigatewayv2.StageArgs{
 			ApiId:      api.ID(),
-			Name:       pulumi.String("$default"), // Default stage
+			Name:       pulumi.String("app"), // Default stage
 			AutoDeploy: pulumi.Bool(true),
 		})
 		if err != nil {
