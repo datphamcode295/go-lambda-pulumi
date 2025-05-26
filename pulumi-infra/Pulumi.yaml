@@ -1,0 +1,7 @@
+name: ginLambdaApi1
+description: ap-southeast-2
+runtime: go
+config:
+    pulumi:tags:
+        value:
+            pulumi:template: aws-go
