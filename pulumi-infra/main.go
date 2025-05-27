@@ -49,7 +49,7 @@ func main() {
 				pulumi.String("arm64"), // or "x86_64"
 			},
 			MemorySize: pulumi.Int(128),
-			Timeout:    pulumi.Int(10),
+			Timeout:    pulumi.Int(300),
 			Environment: &lambda.FunctionEnvironmentArgs{
 				Variables: pulumi.StringMap{
 					"GIN_MODE": pulumi.String("release"),
