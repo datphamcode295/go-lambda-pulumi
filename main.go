@@ -40,11 +40,7 @@ func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 }
 
 func init() {
-	// cfg := config.NewConfig()
-	cfg := &config.Config{
-		DatabaseURL: "",
-		APIKey:      "1234567890",
-	}
+	cfg := config.NewConfig()
 	db, err := gorm.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
 		panic(err)
@@ -75,11 +71,6 @@ func InitRoutes() {
 
 	patientHandler := handler.NewPatientHandler(*patientService)
 	v1.POST("/patients/pay-transaction", patientHandler.PayTransaction)
-
-	// err := router.Run(":4242")
-	// if err != nil {
-	// 	log.Fatalf("Error starting server: %v", err)
-	// }
 
 	ginLambda = ginadapter.NewV2(router)
 }
