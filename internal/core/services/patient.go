@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"time"
 
@@ -34,19 +35,6 @@ func (p *PatientService) PayTransaction(data domain.PayTransactionRequest) (*dom
 		return nil, err
 	}
 
-	// remap
-	type RemapRequest struct {
-		Patient     *domain.Patient `json:"patient"`
-		DateOfBirth string          `json:"date_of_birth"`
-		RecordType  string          `json:"record_type"`
-	}
-
-	remapRequest := RemapRequest{
-		Patient:     patient,
-		DateOfBirth: data.DateOfBirth,
-		RecordType:  data.RecordType,
-	}
-
 	transaction := domain.Transaction{
 		ID:          uuid.New(),
 		PatientID:   data.PatientID,
@@ -61,7 +49,7 @@ func (p *PatientService) PayTransaction(data domain.PayTransactionRequest) (*dom
 		return nil, errors.New("date of birth format must be DD-MM-YYYY")
 	}
 
-	patientAge := time.Since(patientDateOfBirth).Hours() / 24 / 365
+	patientAge := math.Floor(time.Since(patientDateOfBirth).Hours() / 24 / 365)
 	if patientAge < 18 {
 		transaction.Status = domain.TransactionStatusFailed
 		transaction.APIResponse = json.RawMessage(`{"error": "Patient must be more than 18 years old"}`)
@@ -84,9 +72,21 @@ func (p *PatientService) PayTransaction(data domain.PayTransactionRequest) (*dom
 		return rs, nil
 	}
 
+	// remap
+	type SubmitPatientRequest struct {
+		Patient    *domain.Patient `json:"patient"`
+		Age        int             `json:"age"`
+		RecordType string          `json:"record_type"`
+	}
+
+	submitPatientRequest := SubmitPatientRequest{
+		Patient:    patient,
+		Age:        int(patientAge),
+		RecordType: data.RecordType,
+	}
+
 	// call external api
-	// TODO: get api key from config
-	fmt.Printf("Calling external api with request: %+v\n and api key: %s\n", remapRequest, p.cfg.APIKey)
+	fmt.Printf("Calling external api with request: %+v\n and api key: %s\n", submitPatientRequest, p.cfg.APIKey)
 	isSuccess, err := rand.Int(rand.Reader, big.NewInt(2))
 	if err != nil {
 		return nil, err
@@ -103,13 +103,6 @@ func (p *PatientService) PayTransaction(data domain.PayTransactionRequest) (*dom
 			return nil, err
 		}
 
-		// create transaction with status failed
-		// transaction := domain.Transaction{
-		// 	ID:           uuid.New(),
-		// 	PatientID:    data.PatientID,
-		// 	Status:       domain.TransactionStatusFailed,
-		// 	FailedReason: &failReason,
-		// }
 		transaction.Status = domain.TransactionStatusFailed
 		transaction.APIResponse = jsonBody
 		rs, err := p.transactionRepo.CreateTransaction(transaction)

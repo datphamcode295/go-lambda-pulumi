@@ -46,12 +46,6 @@ func getErrorMsg(fe validator.FieldError) string {
 		return "This field is required"
 	case "ddmmyyyy":
 		return "Date must be in DD-MM-YYYY format"
-	case "email":
-		return "Invalid email format"
-	case "min":
-		return fmt.Sprintf("Minimum length is %s", fe.Param())
-	case "max":
-		return fmt.Sprintf("Maximum length is %s", fe.Param())
 	default:
 		return fmt.Sprintf("Validation failed on %s", fe.Tag())
 	}

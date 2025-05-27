@@ -5,7 +5,7 @@ import (
 )
 
 type PatientService interface {
-	PayTransaction(id string) error
+	PayTransaction(data domain.PayTransactionRequest) (*domain.Transaction, error)
 }
 
 type PatientRepository interface {
