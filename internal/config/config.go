@@ -36,13 +36,11 @@ func NewConfig() *Config {
 
 	// Get parameters from Systems Manager Parameter Store
 	databaseURL, err := getParameter(ssmClient, "/app/databaseURL")
-	fmt.Println("DATABASE_URL", databaseURL)
 	if err != nil {
 		log.Fatalf("Failed to get DATABASE_URL parameter: %v", err)
 	}
 
 	apiKey, err := getParameter(ssmClient, "/app/submitPatientApiKey")
-	fmt.Println("API_KEY", apiKey)
 	if err != nil {
 		log.Fatalf("Failed to get API_KEY parameter: %v", err)
 	}
